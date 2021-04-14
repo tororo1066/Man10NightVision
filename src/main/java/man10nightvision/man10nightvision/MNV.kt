@@ -1,30 +1,29 @@
 package man10nightvision.man10nightvision
 
+import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.command.Command
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
-import org.bukkit.event.EventHandler
-import org.bukkit.event.Listener
-import org.bukkit.event.player.PlayerMoveEvent
 import org.bukkit.inventory.ItemStack
 import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
 
-class MNV : JavaPlugin(),Listener {
+class MNV : JavaPlugin() {
 
-    var mode = true
-    var light = 0
-    var lightitem : ItemStack? = null
+    private var mode = true
+    private var light = 0
+    private var lightitem : ItemStack? = null
     private val prefix = "[§a§lMNV§f]"
     override fun onEnable() {
         saveDefaultConfig()
         server.logger.info("$prefix is Enable~~~")
-        server.pluginManager.registerEvents(this,this)
         getCommand("mnv")?.setExecutor(this)
         light = config.getInt("light")
         lightitem = config.getItemStack("lightitem")
+        runtask()
+
     }
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
@@ -46,6 +45,7 @@ class MNV : JavaPlugin(),Listener {
                     return true
                 }
                 mode = true
+                runtask()
                 sender.sendMessage(prefix + "モードをonにしました")
                 return true
             }
@@ -86,18 +86,20 @@ class MNV : JavaPlugin(),Listener {
         return true
     }
 
-    @EventHandler
-    fun move(e : PlayerMoveEvent){
-        if (!mode)return
-        if (e.player.inventory.helmet == null)return
-        if (e.player.inventory.helmet != lightitem)return
-        if (e.player.location.block.lightLevel > light){
-            e.player.removePotionEffect(PotionEffectType.BLINDNESS)
-            e.player.addPotionEffect(PotionEffect(PotionEffectType.NIGHT_VISION,10,1,true))
-        }else{
-            e.player.removePotionEffect(PotionEffectType.NIGHT_VISION)
-            e.player.addPotionEffect(PotionEffect(PotionEffectType.BLINDNESS,10,1,true))
-        }
-        return
+    fun runtask(){
+        Bukkit.getScheduler().runTaskTimer(this, Runnable {
+            if (!mode)return@Runnable
+            for (p in Bukkit.getOnlinePlayers()){
+                if (p.inventory.helmet == null)continue
+                if (p.inventory.helmet != lightitem)continue
+                if (p.location.block.lightLevel > light){
+                    p.removePotionEffect(PotionEffectType.BLINDNESS)
+                    p.addPotionEffect(PotionEffect(PotionEffectType.NIGHT_VISION,10,1,true))
+                }else{
+                    p.removePotionEffect(PotionEffectType.NIGHT_VISION)
+                    p.addPotionEffect(PotionEffect(PotionEffectType.BLINDNESS,10,1,true))
+                }
+            }
+        },0,config.getLong("checktimer") * 20)
     }
 }
