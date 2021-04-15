@@ -2,6 +2,7 @@ package man10nightvision.man10nightvision
 
 import org.bukkit.Bukkit
 import org.bukkit.Material
+import org.bukkit.block.BlockFace
 import org.bukkit.command.Command
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
@@ -86,20 +87,22 @@ class MNV : JavaPlugin() {
         return true
     }
 
-    fun runtask(){
+    private fun runtask(){
         Bukkit.getScheduler().runTaskTimer(this, Runnable {
             if (!mode)return@Runnable
             for (p in Bukkit.getOnlinePlayers()){
                 if (p.inventory.helmet == null)continue
                 if (p.inventory.helmet != lightitem)continue
-                if (p.location.block.lightLevel > light){
+                if (p.location.block.lightLevel < light){
                     p.removePotionEffect(PotionEffectType.BLINDNESS)
-                    p.addPotionEffect(PotionEffect(PotionEffectType.NIGHT_VISION,10,1,true))
+                    p.addPotionEffect(PotionEffect(PotionEffectType.NIGHT_VISION,400,1,true))
                 }else{
                     p.removePotionEffect(PotionEffectType.NIGHT_VISION)
-                    p.addPotionEffect(PotionEffect(PotionEffectType.BLINDNESS,10,1,true))
+                    p.addPotionEffect(PotionEffect(PotionEffectType.BLINDNESS,400,1,true))
                 }
             }
         },0,config.getLong("checktimer") * 20)
     }
 }
+
+
